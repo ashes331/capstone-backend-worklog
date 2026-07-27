@@ -1,5 +1,7 @@
 # Capstone 작업 로그
 
+**보고서 목록 바로 보기: [ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/)**
+
 캡스톤 프로젝트([Capstone-F5/CapstoneProject](https://github.com/Capstone-F5/CapstoneProject)) 작업 중
 제가 직접 진행한 부분을 지시서 단위로 정리하는 저장소입니다. 작업은 `{지시서 작업명} ({작업 기간})`
 폴더 하나에 작업 로그·수정 코드·보고서를 함께 담는 방식으로 쌓아갑니다.
@@ -10,23 +12,26 @@
 
 | 기간 | 작업 | 보고서 |
 |---|---|---|
-| 2026-07-06~12 | AI Tool 파트 (action_tools.py 재작성) | [WORKLOG.md](<./AI Tool 파트 (2026-07-06~12)/WORKLOG.md>) |
-| 2026-07-20~26 | 관리자 백엔드 버그 수정 및 검증 | [바로가기](https://ashes331.github.io/capstone-backend-worklog/) |
+| 2026-07-06~12 | AI Tool 파트 (action_tools.py 재작성) | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/AI%20Tool%20%ED%8C%8C%ED%8A%B8%20%282026-07-06~12%29/report.html) |
+| 2026-07-20~26 | 관리자 백엔드 버그 수정 및 검증 | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/%EA%B4%80%EB%A6%AC%EC%9E%90%20%EB%B0%B1%EC%97%94%EB%93%9C%20%282026-07-20~26%29/report.html) |
 
 ---
 
 ## 2026-07-06~12 — AI Tool 파트
 
+**보고서: [ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/) 목록에서 확인**
+
 `feature/llm-db-tools` 작업. 지시서 역할 분배는 **김성원 — `action_tools.py` 재작성** /
 **임지연 — `api_client.py`, `rag.py`, `prompts.py`, `action_context.py`**였습니다.
 
 > 이 항목은 실시간으로 진행하며 기록한 게 아니라, 지나간 git 커밋 히스토리를 근거로
-> 사후에 재구성한 기록입니다. 자세한 내용은 [`WORKLOG.md`](<./AI Tool 파트 (2026-07-06~12)/WORKLOG.md>) 참고.
+> 사후에 재구성한 기록입니다.
 
 ### 폴더 구성
 
 | 경로 | 내용 |
 |---|---|
+| [`AI Tool 파트 (2026-07-06~12)/report.html`](<./AI Tool 파트 (2026-07-06~12)/report.html>) | 담당별 지시서 대조 체크리스트, 핵심 수정 코드, 발견한 문제를 정리한 웹 문서 |
 | [`AI Tool 파트 (2026-07-06~12)/WORKLOG.md`](<./AI Tool 파트 (2026-07-06~12)/WORKLOG.md>) | 담당자별 지시서 체크리스트, 진행 상황, 발견해 고친 문제와 코드, 검증 결과 |
 | [`AI Tool 파트 (2026-07-06~12)/fixed-code/`](<./AI Tool 파트 (2026-07-06~12)/fixed-code>) | 관련 커밋 시점의 `ai_modules/llm/`, `backend/api/llm.py`, `backend/core/db.py` |
 
@@ -42,7 +47,7 @@
 
 ## 2026-07-20~26 — 관리자 백엔드
 
-**보고서: [ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/)**
+**보고서: [ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/) 목록에서 확인**
 
 `feature/backend-phase2` 작업 중, 서버 기동 자체를 막고 있던 버그들을 찾아 고치고 실 DB로
 전체 기능을 검증했습니다.

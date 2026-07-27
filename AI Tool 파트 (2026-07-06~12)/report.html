@@ -1,0 +1,670 @@
+<title>AI Tool 파트 — action_tools.py 재작성 작업 보고</title>
+<style>
+  :root {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11161a;
+      --surface: #171d21;
+      --surface-sunken: #1d2429;
+      --text: #eceeec;
+      --text-muted: #a2aaa7;
+      --text-faint: #6d7572;
+      --accent: #5fb99f;
+      --accent-soft: #1c2b27;
+      --border: #2a3238;
+      --border-strong: #3a444a;
+      --pass-fg: #7fd39a;
+      --pass-bg: #16281d;
+      --skip-fg: #e0b054;
+      --skip-bg: #2c2413;
+      --del-fg: #e28d8d;
+      --del-bg: #2c1a1a;
+      --code-bg: #1d2327;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #11161a;
+    --surface: #171d21;
+    --surface-sunken: #1d2429;
+    --text: #eceeec;
+    --text-muted: #a2aaa7;
+    --text-faint: #6d7572;
+    --accent: #5fb99f;
+    --accent-soft: #1c2b27;
+    --border: #2a3238;
+    --border-strong: #3a444a;
+    --pass-fg: #7fd39a;
+    --pass-bg: #16281d;
+    --skip-fg: #e0b054;
+    --skip-bg: #2c2413;
+    --del-fg: #e28d8d;
+    --del-bg: #2c1a1a;
+    --code-bg: #1d2327;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+      "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  code, .mono {
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  a { color: var(--accent); }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    border-bottom: 3px solid var(--text);
+    padding-bottom: 22px;
+    margin-bottom: 6px;
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  h1 {
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15.5px;
+    margin: 0;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-label { color: var(--text-faint); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .meta-value { color: var(--text); font-weight: 600; }
+  .meta-value.mono { font-weight: 500; }
+
+  /* ---------- Note banner ---------- */
+  .note-banner {
+    margin-top: 24px;
+    padding: 13px 16px;
+    background: var(--skip-bg);
+    color: var(--skip-fg);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  /* ---------- Stat strip ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 36px 0 44px;
+  }
+  .stat {
+    background: var(--surface);
+    padding: 20px 20px 18px;
+  }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ---------- Section headers ---------- */
+  section { margin-top: 48px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-size: 19px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .section-note { font-size: 13px; color: var(--text-faint); }
+
+  /* ---------- Checklist (지시서 대조) ---------- */
+  .check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .check-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .check-group-head {
+    padding: 14px 18px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .owner-name { font-weight: 800; font-size: 15px; }
+  .owner-role { font-size: 11.5px; color: var(--text-muted); }
+  .check-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+  .check-mod + .check-mod { padding-top: 14px; border-top: 1px dashed var(--border); }
+  .check-mod-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .check-list { display: flex; flex-direction: column; gap: 7px; }
+  .check-item {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .check-item .box {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    background: var(--pass-bg);
+    color: var(--pass-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 2px;
+  }
+  .check-item.fixed .box { background: var(--skip-bg); color: var(--skip-fg); }
+  .fixed-tag {
+    font-size: 10px;
+    background: var(--skip-bg);
+    color: var(--skip-fg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .check-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Code diff blocks ---------- */
+  .diff-grid { display: flex; flex-direction: column; gap: 22px; }
+  .diff-block h3 {
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .diff-block .diff-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    max-width: 68ch;
+  }
+  .diff {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .diff-file {
+    padding: 7px 14px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+  }
+  .diff-body {
+    background: var(--code-bg);
+    overflow-x: auto;
+    padding: 6px 0;
+  }
+  .diff-line {
+    padding: 2px 16px 2px 26px;
+    white-space: pre;
+    position: relative;
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .diff-line.add { background: var(--pass-bg); color: var(--pass-fg); }
+  .diff-line.add::before { content: "+"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.del { background: var(--del-bg); color: var(--del-fg); }
+  .diff-line.del::before { content: "\2212"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.ctx { color: var(--text-muted); }
+  .diff-line.ctx::before { content: ""; }
+
+  /* ---------- Bug list ---------- */
+  .bug-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .bug {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .bug-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 4px;
+  }
+  .bug-desc {
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
+  .bug-desc code {
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- Verification list ---------- */
+  .verify-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+  }
+  .verify-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13.5px;
+  }
+  .verify-item .box {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: var(--pass-bg);
+    color: var(--pass-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10.5px;
+    font-weight: 800;
+    margin-top: 1px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  footer .mono { color: var(--text-muted); }
+
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: 1fr; }
+    .page { padding: 36px 16px 72px; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .page { max-width: none; padding: 0; }
+    .stat, .table-wrap, .bug, .verify-list { box-shadow: none; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="eyebrow">작업 완료 보고</div>
+    <h1>AI Tool 파트 — action_tools.py 재작성</h1>
+    <p class="subtitle">지시서 담당 범위 재작성 + 팀원 담당 파일에서 발견한 문제 보완</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">담당</span>
+        <span class="meta-value">김성원</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">브랜치</span>
+        <span class="meta-value mono">feature/llm-db-tools</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">관련 커밋</span>
+        <span class="meta-value mono">9e4c15b … bcbe7e3</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">기간</span>
+        <span class="meta-value">2026-07-06 ~ 2026-07-12</span>
+      </div>
+    </div>
+    <div class="note-banner">
+      이 보고서는 실시간으로 작성한 게 아니라, 지나간 git 커밋 히스토리(로그·diff)를 근거로
+      사후에 재구성한 기록입니다. 관리자 백엔드 작업 보고서처럼 이번에 직접 curl로 재검증한 것은
+      아니라는 점을 밝혀둡니다.
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">6</div>
+      <div class="stat-label">관련 커밋</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">2</div>
+      <div class="stat-label">담당 외 파일 보완</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">8</div>
+      <div class="stat-label">수정에 관여한 파일</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>지시서 대조 — 담당별 진행 현황</h2>
+      <span class="section-note">docs/지시서_AI파트.md 기준</span>
+    </div>
+    <div class="check-grid">
+
+      <div class="check-group">
+        <div class="check-group-head">
+          <span class="owner-name">김성원</span>
+          <span class="owner-role">action_tools.py 재작성</span>
+        </div>
+        <div class="check-body">
+          <div class="check-mod">
+            <div class="check-mod-head">Step 1. action_tools.py 전체 재작성</div>
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>action_tools_legacy.py로 기존 코드 백업</div>
+              <div class="check-item"><span class="box">✓</span>add_item / remove_item / update_item_options 파라미터를 menu_item_id·cart_item_id 기반으로 교체</div>
+              <div class="check-item"><span class="box">✓</span>get_cart_status, check_user_points Tool 신규 추가</div>
+              <div class="check-item"><span class="box">✓</span>navigate / checkout / ui_action 그대로 유지</div>
+              <div class="check-item fixed"><span class="box">✓</span>menu_item_id(UUID) 조회 수단 부재<span class="fixed-tag">list_menu Tool 추가</span></div>
+              <div class="check-item fixed"><span class="box">✓</span>가격 캐스팅 크래시<span class="fixed-tag">int(float(...))로 수정</span></div>
+            </div>
+          </div>
+          <div class="check-mod">
+            <div class="check-mod-head">Step 2. menu_catalog.py 주석 추가</div>
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>"STT 어휘 힌트 전용으로 역할 축소" 안내 주석 추가</div>
+              <div class="check-item"><span class="box">✓</span>action_tools.py에서 menu_catalog import 제거 확인</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-group">
+        <div class="check-group-head">
+          <span class="owner-name">임지연</span>
+          <span class="owner-role">api_client · rag · prompts · action_context</span>
+        </div>
+        <div class="check-body">
+          <div class="check-mod">
+            <div class="check-mod-head">api_client.py</div>
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>fetch_menu_items 등 8개 함수 구현</div>
+              <div class="check-item fixed"><span class="box">✓</span>create_order payload 필드명 불일치<span class="fixed-tag">user_phone→phone 수정</span></div>
+            </div>
+          </div>
+          <div class="check-mod">
+            <div class="check-mod-head">action_context.py / backend/api/llm.py</div>
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>set_session_id / get_session_id 추가</div>
+              <div class="check-item"><span class="box">✓</span>llm.py에서 agent 실행 전 set_session_id 주입</div>
+            </div>
+          </div>
+          <div class="check-mod">
+            <div class="check-mod-head">rag.py</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>API 키 미설정 시 인덱스 빌드 크래시<span class="fixed-tag">FakeEmbeddings 방어 추가</span></div>
+              <div class="check-item fixed"><span class="box">✓</span>명세서 규격 함수 누락<span class="fixed-tag">build_menu_index 등 스텁 추가</span></div>
+            </div>
+          </div>
+          <div class="check-mod">
+            <div class="check-mod-head">prompts.py</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>ADDITIONAL_SCENARIOS 일부 누락<span class="fixed-tag">포인트·추천·장바구니 수정 시나리오 보완</span></div>
+              <div class="check-item fixed"><span class="box">✓</span>존재하지 않는 도구명 참조<span class="fixed-tag">update_qty/update_item → update_item_options 정리</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>핵심 수정 코드</h2>
+      <span class="section-note">발췌 · 4건</span>
+    </div>
+    <div class="diff-grid">
+
+      <div class="diff-block">
+        <h3>1. menu_item_id(UUID) 조회 수단 부재 (action_tools.py)</h3>
+        <p class="diff-note">add_item이 menu_id(숫자) 대신 menu_item_id(UUID)를 받도록 바뀌었는데, LLM이 그 UUID를 알아낼 방법이 없었습니다. list_menu Tool을 신규로 추가했습니다.</p>
+        <div class="diff">
+          <div class="diff-file">ai_modules/llm/action_tools.py</div>
+          <div class="diff-body">
+            <div class="diff-line add">@tool</div>
+            <div class="diff-line add">def list_menu() -> str:</div>
+            <div class="diff-line add">    """판매 중인 메뉴 목록을 menu_item_id와 함께 조회한다."""</div>
+            <div class="diff-line add">    items = _run(api_client.fetch_menu_items())</div>
+            <div class="diff-line add">    lines = ["[메뉴 목록]"]</div>
+            <div class="diff-line add">    for item in items:</div>
+            <div class="diff-line add">        status = " [품절]" if not item.get("is_available", True) else ""</div>
+            <div class="diff-line add">        lines.append(f"- {item['name_ko']} {int(float(item['base_price']))}원 (menu_item_id: {item['id']}){status}")</div>
+            <div class="diff-line add">    return "\n".join(lines)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>2. 가격 캐스팅 크래시 (action_tools.py)</h3>
+        <p class="diff-note">DB가 반환하는 Decimal 문자열("6200.00")을 바로 int()로 변환하려다 죽던 버그. get_cart_status 등에서 발생.</p>
+        <div class="diff">
+          <div class="diff-file">ai_modules/llm/action_tools.py</div>
+          <div class="diff-body">
+            <div class="diff-line del">line = f"- {item['name_ko']} x{item['quantity']} ({int(item['unit_price'])}원)"</div>
+            <div class="diff-line add">line = f"- {item['name_ko']} x{item['quantity']} ({int(float(item['unit_price']))}원)"</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>3. API 키 미설정 시 인덱스 빌드 크래시 (rag.py)</h3>
+        <p class="diff-note">OPENAI_API_KEY가 없는 로컬 환경에서 헬스체크조차 실패하던 것을, 방어 로직으로 보완했습니다.</p>
+        <div class="diff">
+          <div class="diff-file">ai_modules/llm/rag.py</div>
+          <div class="diff-body">
+            <div class="diff-line ctx">try:</div>
+            <div class="diff-line ctx">    _index = await asyncio.to_thread(FAISS.from_documents, docs, embeddings)</div>
+            <div class="diff-line add">except Exception as e:</div>
+            <div class="diff-line add">    print(f"[RAG 경고] 인덱스 빌드 건너뜀 (API Key 유효성 이슈): {e}")</div>
+            <div class="diff-line add">    fake_emb = FakeEmbeddings(size=1536)</div>
+            <div class="diff-line add">    _index = await asyncio.to_thread(FAISS.from_documents, docs[:1], fake_emb)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>4. 백엔드 스키마와 필드명 불일치 (api_client.py)</h3>
+        <p class="diff-note">create_order가 보내는 payload 키가 user_phone이었는데, 실제 백엔드 OrderIn 스키마는 phone을 기대하고 있어 그대로 보내면 무시되는 상태였습니다.</p>
+        <div class="diff">
+          <div class="diff-file">ai_modules/llm/api_client.py</div>
+          <div class="diff-body">
+            <div class="diff-line del">    payload["user_phone"] = user_phone</div>
+            <div class="diff-line add">    payload["phone"] = user_phone</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>발견한 문제</h2>
+      <span class="section-note">6건</span>
+    </div>
+    <div class="bug-list">
+      <div class="bug">
+        <div class="bug-title">menu_item_id(UUID) 조회 수단 부재</div>
+        <div class="bug-desc">add_item이 UUID 파라미터를 받도록 바뀌었지만, LLM이 그 값을 알아낼 방법이 없었음 — <code>list_menu</code> Tool 신규 추가로 해결</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">가격 캐스팅 크래시</div>
+        <div class="bug-desc">DB의 Decimal 문자열을 <code>int()</code>로 바로 변환하다 크래시 — <code>get_cart_status</code>, <code>list_menu</code>에서 <code>int(float(...))</code>로 수정</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">API 키 미설정 시 RAG 인덱스 빌드 실패</div>
+        <div class="bug-desc"><code>OPENAI_API_KEY</code>가 없는 로컬 환경에서 헬스체크 자체가 죽던 것을 <code>FakeEmbeddings</code> 방어 로직으로 보완</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">명세서 규격 함수 누락</div>
+        <div class="bug-desc"><code>rag.py</code>에 명세서가 요구하는 <code>build_menu_index()</code>, <code>search_menu_by_query()</code> 호환용 함수가 없었음</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">프롬프트 시나리오 누락</div>
+        <div class="bug-desc">포인트·쿠폰 안내, 메뉴 추천, 장바구니 수정 등 <code>ADDITIONAL_SCENARIOS</code>에 빠진 시나리오 보완</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">백엔드 스키마와 필드명 불일치</div>
+        <div class="bug-desc"><code>create_order</code> payload의 <code>user_phone</code>이 실제 <code>OrderIn</code> 스키마의 <code>phone</code>과 안 맞아 그대로 보내면 무시됨</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>검증 (커밋 메시지 기준)</h2>
+      <span class="section-note">이 세션에서 재현하지 않음</span>
+    </div>
+    <div class="verify-list">
+      <div class="verify-item"><span class="box">✓</span>"F버거 세트 하나 주세요" → GET /api/cart/{session_id}에 cart_item 생성 확인</div>
+      <div class="verify-item"><span class="box">✓</span>"양파 빼주세요" → selected_options에 "양파 제외" 포함 확인</div>
+      <div class="verify-item"><span class="box">✓</span>"장바구니 보여줘" → get_cart_status Tool이 실데이터 반환</div>
+      <div class="verify-item"><span class="box">✓</span>"비건 버거 있어?" → RAG/description 기반 추천 응답 확인</div>
+      <div class="verify-item"><span class="box">✓</span>없는 메뉴 ID 사용 시도 → "찾을 수 없습니다" 에러 메시지 확인</div>
+      <div class="verify-item"><span class="box">✓</span>action_tools.py 상단에 menu_catalog import 없음 확인</div>
+    </div>
+  </section>
+
+  <footer>
+    <span>생성: Claude Code 세션 로그 + git 커밋 히스토리 기반 재구성</span>
+    <span class="mono">Capstone-F5/CapstoneProject · feature/llm-db-tools</span>
+  </footer>
+
+</div>

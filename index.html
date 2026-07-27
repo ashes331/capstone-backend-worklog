@@ -2,28 +2,123 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>관리자 백엔드 작업 로그로 이동 중...</title>
+<title>Capstone 작업 로그</title>
 <style>
-  body {
-    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-    background: #f4f3ee;
-    color: #1c1f1e;
+  :root {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
   }
-  a { color: #1f6e5c; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11161a;
+      --surface: #171d21;
+      --surface-sunken: #1d2429;
+      --text: #eceeec;
+      --text-muted: #a2aaa7;
+      --text-faint: #6d7572;
+      --accent: #5fb99f;
+      --accent-soft: #1c2b27;
+      --border: #2a3238;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #11161a; --surface: #171d21; --surface-sunken: #1d2429;
+    --text: #eceeec; --text-muted: #a2aaa7; --text-faint: #6d7572;
+    --accent: #5fb99f; --accent-soft: #1c2b27; --border: #2a3238;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f3ee; --surface: #ffffff; --surface-sunken: #ebe9e2;
+    --text: #1c1f1e; --text-muted: #5c625e; --text-faint: #8a8f8b;
+    --accent: #1f6e5c; --accent-soft: #e3efe9; --border: #e0ddd3;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+      "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  main { max-width: 640px; width: 100%; padding: 64px 24px; }
+  .eyebrow {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); display: inline-block;
+  }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .subtitle { color: var(--text-muted); font-size: 15px; margin: 0 0 40px; }
+  .list { display: flex; flex-direction: column; gap: 14px; }
+  a.entry {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    text-decoration: none;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    transition: border-color .15s ease;
+  }
+  a.entry:hover { border-color: var(--accent); }
+  .entry-period {
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+    font-size: 12px; font-weight: 700; color: var(--accent);
+    background: var(--accent-soft); padding: 2px 8px; border-radius: 5px;
+    display: inline-block; margin-bottom: 8px;
+  }
+  .entry-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .entry-desc { font-size: 13.5px; color: var(--text-muted); }
+  footer { margin-top: 40px; font-size: 12.5px; color: var(--text-faint); }
+  footer a { color: var(--text-faint); }
 </style>
 </head>
 <body>
-  <p>보고서로 이동 중입니다... 자동으로 안 넘어가면 <a id="link" href="#">여기</a>를 눌러주세요.</p>
-  <script>
-    var target = "관리자 백엔드 (2026-07-20~26)/report.html";
-    var url = encodeURI(target);
-    document.getElementById("link").href = url;
-    window.location.replace(url);
-  </script>
+<main>
+  <div class="eyebrow">작업 로그</div>
+  <h1>Capstone 작업 로그</h1>
+  <p class="subtitle">지시서 단위로 정리한 개인 작업 기록. 최신순.</p>
+
+  <div class="list">
+    <a class="entry" id="link-backend" href="#">
+      <span class="entry-period">2026-07-20 ~ 26</span>
+      <div class="entry-title">관리자 백엔드 — 버그 수정 및 검증</div>
+      <div class="entry-desc">서버 기동을 막던 버그 9건 발견·수정, Module A~H 실 DB 검증</div>
+    </a>
+    <a class="entry" id="link-ai" href="#">
+      <span class="entry-period">2026-07-06 ~ 12</span>
+      <div class="entry-title">AI Tool 파트 — action_tools.py 재작성</div>
+      <div class="entry-desc">담당 Tool 재작성 및 팀원 담당 파일에서 발견한 문제 보완</div>
+    </a>
+  </div>
+
+  <footer>
+    원본 프로젝트: <a href="https://github.com/Capstone-F5/CapstoneProject">Capstone-F5/CapstoneProject</a>
+    · 이 저장소: <a href="https://github.com/ashes331/capstone-backend-worklog">ashes331/capstone-backend-worklog</a>
+  </footer>
+</main>
+
+<script>
+  document.getElementById("link-backend").href = encodeURI("관리자 백엔드 (2026-07-20~26)/report.html");
+  document.getElementById("link-ai").href = encodeURI("AI Tool 파트 (2026-07-06~12)/report.html");
+</script>
 </body>
 </html>
