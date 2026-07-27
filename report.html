@@ -1,0 +1,873 @@
+<title>관리자 백엔드 Phase 2 — 버그 수정 및 검증 보고</title>
+<style>
+  :root {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11161a;
+      --surface: #171d21;
+      --surface-sunken: #1d2429;
+      --text: #eceeec;
+      --text-muted: #a2aaa7;
+      --text-faint: #6d7572;
+      --accent: #5fb99f;
+      --accent-soft: #1c2b27;
+      --border: #2a3238;
+      --border-strong: #3a444a;
+      --pass-fg: #7fd39a;
+      --pass-bg: #16281d;
+      --skip-fg: #e0b054;
+      --skip-bg: #2c2413;
+      --del-fg: #e28d8d;
+      --del-bg: #2c1a1a;
+      --code-bg: #1d2327;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #11161a;
+    --surface: #171d21;
+    --surface-sunken: #1d2429;
+    --text: #eceeec;
+    --text-muted: #a2aaa7;
+    --text-faint: #6d7572;
+    --accent: #5fb99f;
+    --accent-soft: #1c2b27;
+    --border: #2a3238;
+    --border-strong: #3a444a;
+    --pass-fg: #7fd39a;
+    --pass-bg: #16281d;
+    --skip-fg: #e0b054;
+    --skip-bg: #2c2413;
+    --del-fg: #e28d8d;
+    --del-bg: #2c1a1a;
+    --code-bg: #1d2327;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+      "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  code, .mono {
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    border-bottom: 3px solid var(--text);
+    padding-bottom: 22px;
+    margin-bottom: 6px;
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  h1 {
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15.5px;
+    margin: 0;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-label { color: var(--text-faint); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .meta-value { color: var(--text); font-weight: 600; }
+  .meta-value.mono { font-weight: 500; }
+
+  /* ---------- Stat strip ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 36px 0 44px;
+  }
+  .stat {
+    background: var(--surface);
+    padding: 20px 20px 18px;
+  }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ---------- Section headers ---------- */
+  section { margin-top: 48px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-size: 19px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .section-note { font-size: 13px; color: var(--text-faint); }
+
+  /* ---------- Results table ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 14px;
+    min-width: 640px;
+  }
+  thead th {
+    text-align: left;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 700;
+    padding: 12px 16px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .mod-cell { white-space: nowrap; font-weight: 700; }
+  .mod-code {
+    display: inline-block;
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 7px;
+    border-radius: 5px;
+    margin-right: 8px;
+  }
+  .result-text { color: var(--text-muted); font-size: 13.5px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .chip-pass { color: var(--pass-fg); background: var(--pass-bg); }
+  .chip-partial { color: var(--skip-fg); background: var(--skip-bg); }
+
+  /* ---------- Timeline ---------- */
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 2px solid var(--border-strong);
+  }
+  .timeline li {
+    position: relative;
+    padding: 2px 0 26px 28px;
+  }
+  .timeline li:last-child { padding-bottom: 2px; }
+  .timeline li::before {
+    content: attr(data-step);
+    position: absolute;
+    left: -19px;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+  }
+  .timeline h3 {
+    margin: 0 0 6px;
+    font-size: 15.5px;
+    font-weight: 700;
+  }
+  .timeline p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    max-width: 62ch;
+  }
+  .timeline .tag-list {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+    font-size: 11.5px;
+    background: var(--code-bg);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+
+  /* ---------- Checklist (지시서 대조) ---------- */
+  .check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .check-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .check-group-head {
+    padding: 14px 18px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .owner-name { font-weight: 800; font-size: 15px; }
+  .owner-role { font-size: 11.5px; color: var(--text-muted); }
+  .check-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+  .check-mod + .check-mod { padding-top: 14px; border-top: 1px dashed var(--border); }
+  .check-mod-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .check-list { display: flex; flex-direction: column; gap: 7px; }
+  .check-item {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .check-item .box {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    background: var(--pass-bg);
+    color: var(--pass-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 2px;
+  }
+  .check-item.fixed .box { background: var(--skip-bg); color: var(--skip-fg); }
+  .fixed-tag {
+    font-size: 10px;
+    background: var(--skip-bg);
+    color: var(--skip-fg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .check-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Code diff blocks ---------- */
+  .diff-grid { display: flex; flex-direction: column; gap: 22px; }
+  .diff-block h3 {
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .diff-block .diff-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    max-width: 68ch;
+  }
+  .diff {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .diff-file {
+    padding: 7px 14px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+  }
+  .diff-body {
+    background: var(--code-bg);
+    overflow-x: auto;
+    padding: 6px 0;
+  }
+  .diff-line {
+    padding: 2px 16px 2px 26px;
+    white-space: pre;
+    position: relative;
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .diff-line.add { background: var(--pass-bg); color: var(--pass-fg); }
+  .diff-line.add::before { content: "+"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.del { background: var(--del-bg); color: var(--del-fg); }
+  .diff-line.del::before { content: "\2212"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.ctx { color: var(--text-muted); }
+  .diff-line.ctx::before { content: ""; }
+
+  /* ---------- Bug list ---------- */
+  .bug-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .bug {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .bug-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 4px;
+  }
+  .bug-desc {
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
+  .bug-desc code {
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  footer .mono { color: var(--text-muted); }
+
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: 1fr; }
+    .page { padding: 36px 16px 72px; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .page { max-width: none; padding: 0; }
+    .stat, .table-wrap, .bug { box-shadow: none; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="eyebrow">작업 완료 보고</div>
+    <h1>관리자 백엔드 Phase 2 — 버그 수정 및 검증</h1>
+    <p class="subtitle">async 세션 불일치·인증 누락 수정 후 Module A~H 전 기능 실 DB 검증</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">담당</span>
+        <span class="meta-value">김성원</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">브랜치</span>
+        <span class="meta-value mono">feature/backend-phase2</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">커밋</span>
+        <span class="meta-value mono">8e96697</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">날짜</span>
+        <span class="meta-value">2026-07-26</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">상태</span>
+        <span class="meta-value" style="color: var(--pass-fg);">push 완료 · PR 미생성</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">9</div>
+      <div class="stat-label">발견·수정한 버그</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">A–H</div>
+      <div class="stat-label">전 모듈 실 DB 검증</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">16</div>
+      <div class="stat-label">수정된 파일</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>지시서 대조 — 담당별 완료 체크리스트</h2>
+      <span class="section-note">docs/지시서_관리자백엔드.md 기준</span>
+    </div>
+    <div class="check-grid">
+
+      <div class="check-group">
+        <div class="check-group-head">
+          <span class="owner-name">김성원</span>
+          <span class="owner-role">마이그레이션 · 인증 · 메뉴관리 · 회원관리</span>
+        </div>
+        <div class="check-body">
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">1단계</span>마이그레이션</div>
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>orders.status / user_coupon_id 컬럼, admin_users 테이블 추가</div>
+              <div class="check-item"><span class="box">✓</span>init.sql 스키마 동기화</div>
+              <div class="check-item"><span class="box">✓</span>requirements.txt에 passlib · python-jose 추가</div>
+              <div class="check-item fixed"><span class="box">✓</span>.env에 ADMIN_JWT_SECRET 등 4개 값 반영<span class="fixed-tag">이번에 채움</span></div>
+            </div>
+          </div>
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">A</span>관리자 인증</div>
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>security.py · admin_dao.py · api/admin/auth.py</div>
+              <div class="check-item"><span class="box">✓</span>부트스트랩 OWNER 계정 자동 생성</div>
+              <div class="check-item"><span class="box">✓</span>오답 401 · 토큰없음 401 · /me 200 확인</div>
+              <div class="check-item"><span class="box">–</span>STAFF→OWNER 전용 403 — 대상 엔드포인트 없어 검증 보류</div>
+            </div>
+          </div>
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">B</span>메뉴 · 카테고리 CRUD</div>
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>메뉴 CRUD + rag.py invalidate_cache() 연동</div>
+              <div class="check-item"><span class="box">✓</span>가격 수정 즉시 반영 확인</div>
+              <div class="check-item"><span class="box">✓</span>하드 삭제 → 소프트 삭제 + 409 확인</div>
+            </div>
+          </div>
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">G</span>회원 · 포인트</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>회원 조회 · 포인트 조정 API<span class="fixed-tag">중복정의로 파손 → 복구</span></div>
+              <div class="check-item"><span class="box">✓</span>전화번호 검색 · 조정 후 고객 API 즉시 반영 확인</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="check-group">
+        <div class="check-group-head">
+          <span class="owner-name">임지연</span>
+          <span class="owner-role">주문로직 · 주문관리 · 쿠폰할인 · 결제환불 · 통계</span>
+        </div>
+        <div class="check-body">
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">C</span>주문 처리 로직</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>items 직렬화, 포인트·쿠폰 반영<span class="fixed-tag">cart_id→session_id 수정</span></div>
+              <div class="check-item"><span class="box">✓</span>실제 order.status 반환</div>
+              <div class="check-item"><span class="box">✓</span>쿠폰 재사용 400 확인</div>
+            </div>
+          </div>
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">E</span>주문 관리(관리자)</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>list_orders / update_order_status<span class="fixed-tag">sync→async, 인증 추가</span></div>
+              <div class="check-item"><span class="box">✓</span>역방향 전이 400, 정상 전이 확인</div>
+            </div>
+          </div>
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">F</span>쿠폰 · 할인 CRUD</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>쿠폰/할인 생성·발급 CRUD<span class="fixed-tag">sync→async, 인증 추가</span></div>
+              <div class="check-item"><span class="box">✓</span>생성→발급→적용 전체 플로우 확인</div>
+            </div>
+          </div>
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">D</span>결제 · 환불</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>환불 시 포인트·쿠폰 원상복구<span class="fixed-tag">sync→async, 인증 추가</span></div>
+              <div class="check-item"><span class="box">✓</span>재환불 409 확인</div>
+            </div>
+          </div>
+
+          <div class="check-mod">
+            <div class="check-mod-head"><span class="mod-code">H</span>통계 · 대시보드</div>
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>매출 요약 · 추이 · 인기메뉴<span class="fixed-tag">stats.py 오타, sync→async, 인증 추가</span></div>
+              <div class="check-item"><span class="box">✓</span>COMPLETED 집계, 환불건 제외 확인</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>모듈별 테스트 결과</h2>
+      <span class="section-note">로컬 kiosk_db · localhost:8000</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>모듈</th>
+            <th>결과</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">1단계</span>마이그레이션</td>
+            <td class="result-text"><code>orders.status</code> / <code>user_coupon_id</code> 컬럼 ALTER 완료 확인</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">A</span>인증</td>
+            <td class="result-text">로그인 성공 · 오답 401 · 토큰없음 401 · <code>/me</code> 200 — STAFF 403은 대상 엔드포인트 없어 스킵</td>
+            <td><span class="chip chip-partial">3 / 4</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">B</span>메뉴</td>
+            <td class="result-text">가격 수정 즉시 반영 · 진행중 주문 포함 메뉴 하드삭제 → 409 + 자동 품절 전환</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">C</span>주문 로직</td>
+            <td class="result-text">items 직렬화 · 포인트 적립 124p · 쿠폰 10% 할인 620원 정확 계산 · 재사용 400</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">D</span>환불</td>
+            <td class="result-text">포인트 원상복구 179→124 · 쿠폰 복구 후 재사용 성공 · CANCELLED 전환 · 재환불 409</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">E</span>주문 관리</td>
+            <td class="result-text">목록 조회 · RECEIVED→COOKING 정상 전이 · 역행 시도 400</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">F</span>쿠폰</td>
+            <td class="result-text">생성 · 발급 · 적용 전체 플로우 정상</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">G</span>회원</td>
+            <td class="result-text">전화번호 검색 · 사유 없는 조정 400 · 조정 후 고객 API 즉시 반영</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">H</span>통계</td>
+            <td class="result-text">RECEIVED→COMPLETED 진행 후 매출 4,320원 · 1건 정확 집계</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>핵심 수정 코드</h2>
+      <span class="section-note">발췌 · 4건</span>
+    </div>
+    <div class="diff-grid">
+
+      <div class="diff-block">
+        <h3>1. 파일명 오타 — 서버 기동 자체가 불가능했던 원인</h3>
+        <p class="diff-note"><code>main.py</code>는 원래부터 <code>stats</code> 모듈을 import하고 있었는데, 실제 파일명이 <code>starts.py</code>였습니다. 파일명만 바로잡았습니다.</p>
+        <div class="diff">
+          <div class="diff-file">backend/api/admin/ · backend/main.py는 수정 없음</div>
+          <div class="diff-body">
+            <div class="diff-line del">backend/api/admin/starts.py</div>
+            <div class="diff-line del">backend/dao/starts_dao.py</div>
+            <div class="diff-line add">backend/api/admin/stats.py</div>
+            <div class="diff-line add">backend/dao/stats_dao.py</div>
+            <div class="diff-line ctx"></div>
+            <div class="diff-line ctx"># main.py (변경 없음 — 애초에 이렇게 import 하고 있었음)</div>
+            <div class="diff-line ctx">from backend.api.admin import stats as admin_stats</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>2. sync → async 전환 (discount_dao.py)</h3>
+        <p class="diff-note">Module C/D/E/F/H 6개 파일이 이 패턴이었습니다. sync <code>Session</code> + 존재하지 않는 <code>get_db()</code>를 참조해 import 시점에 죽던 것을, 프로젝트 표준인 <code>AsyncSession</code>으로 통일했습니다.</p>
+        <div class="diff">
+          <div class="diff-file">backend/dao/discount_dao.py</div>
+          <div class="diff-body">
+            <div class="diff-line del">from sqlalchemy.orm import Session</div>
+            <div class="diff-line ctx"></div>
+            <div class="diff-line del">def list_discounts(db: Session):</div>
+            <div class="diff-line del">    return db.query(Discount).all()</div>
+            <div class="diff-line add">from sqlalchemy.ext.asyncio import AsyncSession</div>
+            <div class="diff-line add">from sqlalchemy import select</div>
+            <div class="diff-line ctx"></div>
+            <div class="diff-line add">async def list_discounts(db: AsyncSession) -> list[Discount]:</div>
+            <div class="diff-line add">    result = await db.execute(select(Discount))</div>
+            <div class="diff-line add">    return result.scalars().all()</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>3. 관리자 인증 누락 (admin/discounts.py 외 4개 라우터)</h3>
+        <p class="diff-note">로그인 없이도 <code>/api/admin/*</code> 전체가 호출 가능했던 보안 구멍입니다. 라우터 생성 시점에 인증 의존성을 걸어 예외 없이 적용되도록 했습니다.</p>
+        <div class="diff">
+          <div class="diff-file">backend/api/admin/discounts.py</div>
+          <div class="diff-body">
+            <div class="diff-line del">router = APIRouter(prefix="/api/admin/discounts", tags=["admin-discounts"])</div>
+            <div class="diff-line add">router = APIRouter(</div>
+            <div class="diff-line add">    prefix="/api/admin/discounts", tags=["admin-discounts"],</div>
+            <div class="diff-line add">    dependencies=[Depends(get_current_admin)],</div>
+            <div class="diff-line add">)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>4. 중복 함수로 깨졌던 Module G (user_dao.py)</h3>
+        <p class="diff-note">진수민 님이 만든 async <code>adjust_points</code>를, 임지연 님이 같은 이름의 sync 버전으로 뒤에 다시 정의하면서 덮어써버려 회원 포인트 API가 같이 깨져 있었습니다. 하나로 병합했습니다.</p>
+        <div class="diff">
+          <div class="diff-file">backend/dao/user_dao.py</div>
+          <div class="diff-body">
+            <div class="diff-line ctx">async def adjust_points(db: AsyncSession, user_id, delta, reason: str) -> User | None:</div>
+            <div class="diff-line ctx">    ...  # 진수민 · Module G</div>
+            <div class="diff-line ctx"></div>
+            <div class="diff-line del">def adjust_points(db: Session, user_id: str, delta: int) -> User:</div>
+            <div class="diff-line del">    ...  # 임지연 · Module C — 위 함수를 이름 충돌로 덮어씀</div>
+            <div class="diff-line add">async def adjust_points(db: AsyncSession, user_id: str, delta: int, reason: str = "") -> User | None:</div>
+            <div class="diff-line add">    ...  # 하나로 병합 — reason 기본값 처리로 Module C 호출부도 그대로 동작</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>작업 흐름</h2>
+    </div>
+    <ol class="timeline">
+      <li data-step="1">
+        <h3>상태 파악</h3>
+        <p>로컬 프로젝트와 GitHub main / feature/backend-phase2 간 차이를 비교. backend-phase2가 origin엔 있지만 로컬에 체크아웃된 적이 없다는 걸 확인하고 새로 받음.</p>
+      </li>
+      <li data-step="2">
+        <h3>지시서·명세서 대조 검증</h3>
+        <p>담당 업무 지시서와 백엔드 기능명세서를 실제 코드와 한 줄씩 대조하며 아래 9개 버그를 발견.</p>
+      </li>
+      <li data-step="3">
+        <h3>수정</h3>
+        <p>발견한 버그를 전부 수정 — async 전환, 인증 의존성 추가, 파일명 정정, 중복 정의 정리, 스키마·필드명 불일치 정리.</p>
+      </li>
+      <li data-step="4">
+        <h3>로컬 실 DB 검증</h3>
+        <p><code>.env</code>에 관리자 인증 값 설정, <code>patch_db.py</code>로 컬럼 반영 후 서버를 직접 기동해 Module A~H 전체를 curl로 호출 검증.</p>
+      </li>
+      <li data-step="5">
+        <h3>형상관리</h3>
+        <p>feature/backend-phase2에 커밋(8e96697) 후 origin에 push. main 병합은 팀 판단에 맡기고 PR은 아직 생성하지 않음.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>발견한 버그</h2>
+      <span class="section-note">9건</span>
+    </div>
+    <div class="bug-list">
+      <div class="bug">
+        <div class="bug-title">파일명 오타로 서버 기동 불가</div>
+        <div class="bug-desc"><code>starts.py</code> / <code>starts_dao.py</code>가 실제로는 <code>stats.py</code>여야 함 — <code>main.py</code>는 처음부터 <code>stats</code>를 import하고 있어 <code>ModuleNotFoundError</code> 발생</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">async/sync 세션 불일치</div>
+        <div class="bug-desc">Module C/D/E/F/H 6개 파일이 명세서 규정(async)과 다르게 sync <code>Session</code> + 존재하지 않는 <code>get_db()</code>를 참조해 import 시점에 오류</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">관리자 인증 누락</div>
+        <div class="bug-desc"><code>admin/orders.py</code>, <code>coupons.py</code>, <code>discounts.py</code>, <code>payments.py</code>, <code>stats.py</code> 5개 라우터에 <code>Depends(get_current_admin)</code>가 전혀 걸려있지 않아 로그인 없이 환불까지 호출 가능했던 보안 구멍</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">Module G를 덮어쓴 중복 함수</div>
+        <div class="bug-desc"><code>user_dao.py</code>에 <code>adjust_points</code>가 두 번 정의되어 있어, 뒤에 추가된 sync 버전이 앞선 async 버전(회원 포인트 API)을 덮어써 같이 깨져 있었음</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">스키마 클래스 중복 정의</div>
+        <div class="bug-desc"><code>order_schemas.py</code>의 <code>OrderAdminOut</code>이 두 번 정의되어 잘못된 두 번째 정의가 올바른 첫 번째 정의를 덮어씀</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">존재하지 않는 스키마 참조</div>
+        <div class="bug-desc"><code>order.py</code>가 <code>OrderCreateIn</code>·<code>cart_id</code>를 참조했지만 실제 스키마는 <code>OrderIn</code>·<code>session_id</code> — 장바구니 조회 흐름 자체와 불일치</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">필드명 불일치</div>
+        <div class="bug-desc"><code>OrderOut</code>/<code>OrderItemOut</code> 응답 조립 시 <code>order_id</code> 대신 <code>id</code>, 필수 필드 <code>name_ko</code> 누락 등으로 Pydantic 검증 실패</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">관계(relationship) 누락</div>
+        <div class="bug-desc"><code>UserCoupon</code> 모델에 <code>coupon</code> 관계가 없어 쿠폰 적용 로직에서 <code>user_coupon.coupon</code> 접근 시 오류</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">스키마 파일 들여쓰기 오류</div>
+        <div class="bug-desc"><code>payment_schemas.py</code>의 <code>class PaymentOut</code> 내부에 <code>import</code> 문이 잘못 들여써져 있어 Pydantic 모델 정의 자체가 실패</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>생성: Claude Code 세션 로그 기반 자동 정리</span>
+    <span class="mono">Capstone-F5/CapstoneProject · feature/backend-phase2@8e96697</span>
+  </footer>
+
+</div>
