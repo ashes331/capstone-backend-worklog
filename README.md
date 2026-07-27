@@ -1,5 +1,7 @@
 # Capstone 관리자 백엔드 — 버그 수정 및 검증 작업 로그
 
+**보고서 바로 보기: [ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/)**
+
 캡스톤 프로젝트(Capstone-F5/CapstoneProject)의 관리자 백엔드(`feature/backend-phase2`) 작업 중,
 서버 기동 자체를 막고 있던 버그들을 찾아 고치고 실 DB로 전체 기능을 검증한 기록입니다.
 
@@ -29,4 +31,4 @@ Module C(주문로직) · D(환불) · E(주문관리) · F(쿠폰할인) · H(�
 - **검증**: 로컬 MySQL에 연결해 Module A~H 전체를 실제 API 호출로 완료 기준 확인
 - **결과**: `feature/backend-phase2`에 커밋 후 push 완료
 
-자세한 내용은 `report.html`을 다운로드해 브라우저로 열어 확인하세요.
+자세한 내용은 **[ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/)**에서 확인하세요.
