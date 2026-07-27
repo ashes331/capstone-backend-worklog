@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>관리자 백엔드 작업 로그로 이동 중...</title>
+<style>
+  body {
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background: #f4f3ee;
+    color: #1c1f1e;
+  }
+  a { color: #1f6e5c; }
+</style>
+</head>
+<body>
+  <p>보고서로 이동 중입니다... 자동으로 안 넘어가면 <a id="link" href="#">여기</a>를 눌러주세요.</p>
+  <script>
+    var target = "관리자 백엔드 (2026-07-20~26)/report.html";
+    var url = encodeURI(target);
+    document.getElementById("link").href = url;
+    window.location.replace(url);
+  </script>
+</body>
+</html>
