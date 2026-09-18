@@ -12,9 +12,34 @@
 
 | 기간 | 작업 | 보고서 |
 |---|---|---|
+| 2026-05-19 | 제스처 인식 모듈 초기 버전 업로드 | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/%EC%A0%9C%EC%8A%A4%EC%B2%98%20%EB%AA%A8%EB%93%88%20API%20%EC%97%85%EB%A1%9C%EB%93%9C%20%282026-05-19%29/report.html) |
 | 2026-07-06~12 | AI Tool 파트 (action_tools.py 재작성) | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/AI%20Tool%20%ED%8C%8C%ED%8A%B8%20%282026-07-06~12%29/report.html) |
 | 2026-07-20~26 | 관리자 백엔드 버그 수정 및 검증 | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/%EA%B4%80%EB%A6%AC%EC%9E%90%20%EB%B0%B1%EC%97%94%EB%93%9C%20%282026-07-20~26%29/report.html) |
 | 2026-09-14~19 | 휠체어 인식 YOLO 재학습 및 감지 연동 | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/%ED%9C%A0%EC%B2%B4%EC%96%B4%20%EC%9D%B8%EC%8B%9D%20YOLO%20%282026-09-14~19%29/report.html) |
+
+---
+
+## 2026-05-19 — 제스처 인식 모듈 초기 버전 업로드
+
+**보고서: [ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/) 목록에서 확인**
+
+`5af1800`(GitHub 웹 업로드) 한 건으로, MediaPipe 손 랜드마크를 규칙으로 해석하는 제스처 API
+(`gesture_module_API.py`)와 웹캠 테스트 스크립트(`test_gesture.py`)를 올린 작업입니다. 지시서는 확인되지
+않았고, 당시 검증 기록도 남아 있지 않아 git 히스토리와 코드에서 확인되는 사실만 사후에 재구성했습니다.
+
+### 폴더 구성
+
+| 경로 | 내용 |
+|---|---|
+| [`제스처 모듈 API 업로드 (2026-05-19)/WORKLOG.md`](<./제스처 모듈 API 업로드 (2026-05-19)/WORKLOG.md>) | 올린 내용과 인식 규칙, 이후 이력, 초기 버전의 한계(확인/추정/기록 없음 구분) |
+| [`제스처 모듈 API 업로드 (2026-05-19)/fixed-code/`](<./제스처 모듈 API 업로드 (2026-05-19)/fixed-code>) | 커밋 시점 그대로의 `ai_modules/cv/gesture_module_API.py`, `test_gesture.py` |
+| [`제스처 모듈 API 업로드 (2026-05-19)/report.html`](<./제스처 모듈 API 업로드 (2026-05-19)/report.html>) | 인식 규칙, 핵심 코드, 이후 이력, 한계를 정리한 웹 문서 |
+
+### 요약
+
+- **내용**: 스와이프(손목 이동 80픽셀 이상) · OK(엄지–검지 거리) · 손가락 개수 1~5를 우선순위대로 판정, 검지 끝 좌표는 항상 함께 반환
+- **이후**: 5/20 엄지 판정을 손 방향에 무관하게 수정, 5/25에 다른 팀원이 크게 재작성 — 현재도 같은 모듈이 `gesture_service.py`에서 쓰이고 규칙 기반 fallback으로 남아 있음
+- **한계**: 검증 기록 없음, 스와이프 기준이 해상도·FPS에 묶였을 수 있다는 점은 추정으로만 표기
 
 ---
 

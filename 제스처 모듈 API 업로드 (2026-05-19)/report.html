@@ -1,0 +1,665 @@
+<title>제스처 인식 모듈 초기 버전 업로드 — 작업 기록</title>
+<style>
+  :root {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11161a;
+      --surface: #171d21;
+      --surface-sunken: #1d2429;
+      --text: #eceeec;
+      --text-muted: #a2aaa7;
+      --text-faint: #6d7572;
+      --accent: #5fb99f;
+      --accent-soft: #1c2b27;
+      --border: #2a3238;
+      --border-strong: #3a444a;
+      --pass-fg: #7fd39a;
+      --pass-bg: #16281d;
+      --skip-fg: #e0b054;
+      --skip-bg: #2c2413;
+      --del-fg: #e28d8d;
+      --del-bg: #2c1a1a;
+      --code-bg: #1d2327;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #11161a;
+    --surface: #171d21;
+    --surface-sunken: #1d2429;
+    --text: #eceeec;
+    --text-muted: #a2aaa7;
+    --text-faint: #6d7572;
+    --accent: #5fb99f;
+    --accent-soft: #1c2b27;
+    --border: #2a3238;
+    --border-strong: #3a444a;
+    --pass-fg: #7fd39a;
+    --pass-bg: #16281d;
+    --skip-fg: #e0b054;
+    --skip-bg: #2c2413;
+    --del-fg: #e28d8d;
+    --del-bg: #2c1a1a;
+    --code-bg: #1d2327;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+      "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  code, .mono {
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    border-bottom: 3px solid var(--text);
+    padding-bottom: 22px;
+    margin-bottom: 6px;
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  h1 {
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15.5px;
+    margin: 0;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-label { color: var(--text-faint); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .meta-value { color: var(--text); font-weight: 600; }
+  .meta-value.mono { font-weight: 500; }
+
+  /* ---------- Stat strip ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 36px 0 44px;
+  }
+  .stat {
+    background: var(--surface);
+    padding: 20px 20px 18px;
+  }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ---------- Section headers ---------- */
+  section { margin-top: 48px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-size: 19px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .section-note { font-size: 13px; color: var(--text-faint); }
+
+  /* ---------- Results table ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 14px;
+    min-width: 640px;
+  }
+  thead th {
+    text-align: left;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 700;
+    padding: 12px 16px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .mod-cell { white-space: nowrap; font-weight: 700; }
+  .mod-code {
+    display: inline-block;
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 7px;
+    border-radius: 5px;
+    margin-right: 8px;
+  }
+  .result-text { color: var(--text-muted); font-size: 13.5px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .chip-pass { color: var(--pass-fg); background: var(--pass-bg); }
+  .chip-partial { color: var(--skip-fg); background: var(--skip-bg); }
+
+  /* ---------- Timeline ---------- */
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 2px solid var(--border-strong);
+  }
+  .timeline li {
+    position: relative;
+    padding: 2px 0 26px 28px;
+  }
+  .timeline li:last-child { padding-bottom: 2px; }
+  .timeline li::before {
+    content: attr(data-step);
+    position: absolute;
+    left: -19px;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+  }
+  .timeline h3 {
+    margin: 0 0 6px;
+    font-size: 15.5px;
+    font-weight: 700;
+  }
+  .timeline p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    max-width: 62ch;
+  }
+  .timeline .tag-list {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+    font-size: 11.5px;
+    background: var(--code-bg);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+
+  /* ---------- Checklist (지시서 대조) ---------- */
+  .check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .check-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .check-group-head {
+    padding: 14px 18px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .owner-name { font-weight: 800; font-size: 15px; }
+  .owner-role { font-size: 11.5px; color: var(--text-muted); }
+  .check-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+  .check-mod + .check-mod { padding-top: 14px; border-top: 1px dashed var(--border); }
+  .check-mod-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .check-list { display: flex; flex-direction: column; gap: 7px; }
+  .check-item {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .check-item .box {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    background: var(--pass-bg);
+    color: var(--pass-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 2px;
+  }
+  .check-item.fixed .box { background: var(--skip-bg); color: var(--skip-fg); }
+  .fixed-tag {
+    font-size: 10px;
+    background: var(--skip-bg);
+    color: var(--skip-fg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .check-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Code diff blocks ---------- */
+  .diff-grid { display: flex; flex-direction: column; gap: 22px; }
+  .diff-block h3 {
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .diff-block .diff-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    max-width: 68ch;
+  }
+  .diff {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .diff-file {
+    padding: 7px 14px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+  }
+  .diff-body {
+    background: var(--code-bg);
+    overflow-x: auto;
+    padding: 6px 0;
+  }
+  .diff-line {
+    padding: 2px 16px 2px 26px;
+    white-space: pre;
+    position: relative;
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .diff-line.add { background: var(--pass-bg); color: var(--pass-fg); }
+  .diff-line.add::before { content: "+"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.del { background: var(--del-bg); color: var(--del-fg); }
+  .diff-line.del::before { content: "\2212"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.ctx { color: var(--text-muted); }
+  .diff-line.ctx::before { content: ""; }
+
+  /* ---------- Bug list ---------- */
+  .bug-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .bug {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .bug-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 4px;
+  }
+  .bug-desc {
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
+  .bug-desc code {
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  footer .mono { color: var(--text-muted); }
+
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: 1fr; }
+    .page { padding: 36px 16px 72px; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .page { max-width: none; padding: 0; }
+    .stat, .table-wrap, .bug { box-shadow: none; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="eyebrow">작업 기록</div>
+    <h1>제스처 인식 모듈 초기 버전 업로드</h1>
+    <p class="subtitle">MediaPipe 손 랜드마크를 규칙으로 해석하는 제스처 API와 웹캠 테스트 스크립트</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">업로드</span>
+        <span class="meta-value">김성원</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">저장소</span>
+        <span class="meta-value mono">Capstone-F5/CapstoneProject</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">커밋</span>
+        <span class="meta-value mono">5af1800</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">날짜</span>
+        <span class="meta-value">2026-05-19</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">비고</span>
+        <span class="meta-value">사후 재구성 · 지시서 없음</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">2</div>
+      <div class="stat-label">업로드한 파일</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">≈170</div>
+      <div class="stat-label">추가된 줄</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3종</div>
+      <div class="stat-label">인식 규칙 (스와이프 · OK · 손가락 수)</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>인식 규칙</h2>
+      <span class="section-note">gesture_module_API.py · 위에서부터 우선순위</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>제스처</th>
+            <th>판정 규칙</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">1</span>swipe</td>
+            <td class="result-text">손목(0번) 좌표를 최근 15프레임 버퍼에 저장, 10프레임 이상 쌓이고 처음–끝 이동 거리가 <strong>80픽셀 이상</strong>이면 스와이프. 이동량이 큰 축으로 방향 결정</td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">2</span>ok</td>
+            <td class="result-text">엄지 끝(4번)–검지 끝(8번) 거리 <strong>0.05 미만</strong>(정규화 좌표), 중지·약지·소지는 펴져 있음</td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">3</span>finger_1~5</td>
+            <td class="result-text">엄지는 x축(4번 &lt; 3번), 나머지 네 손가락은 tip이 pip보다 위에 있으면 펴진 것으로 세어 개수 반환</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note" style="margin-top:10px;">검지 끝 좌표는 제스처와 무관하게 항상 함께 반환(<code>index_position</code>), 손이 없으면 스와이프 버퍼 초기화, 예외는 <code>error</code>에 담아 반환</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>핵심 코드</h2>
+    </div>
+    <div class="diff-grid">
+      <div class="diff-block">
+        <h3>스와이프 판정 — 손목 이동 궤적</h3>
+        <p class="diff-note">버퍼 처음과 끝의 위치 차이로 방향을 정하고, 짧은 움직임은 스와이프로 치지 않습니다.</p>
+        <div class="diff">
+          <div class="diff-file">ai_modules/cv/gesture_module_API.py</div>
+          <div class="diff-body">
+            <div class="diff-line add">def _detect_swipe():</div>
+            <div class="diff-line add">    if len(wrist_buffer) &lt; 10:</div>
+            <div class="diff-line add">        return None</div>
+            <div class="diff-line add">    dx = wrist_buffer[-1][0] - wrist_buffer[0][0]</div>
+            <div class="diff-line add">    dy = wrist_buffer[-1][1] - wrist_buffer[0][1]</div>
+            <div class="diff-line add">    dist = (dx**2 + dy**2) ** 0.5</div>
+            <div class="diff-line add">    if dist &lt; 80:</div>
+            <div class="diff-line add">        return None</div>
+            <div class="diff-line add">    if abs(dx) &gt; abs(dy):</div>
+            <div class="diff-line add">        return "swipe_right" if dx &gt; 0 else "swipe_left"</div>
+            <div class="diff-line add">    else:</div>
+            <div class="diff-line add">        return "swipe_down" if dy &gt; 0 else "swipe_up"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>이후 이력</h2>
+      <span class="section-note">다른 작성자 · git log 기준</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>내용</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mod-cell">05-20</td>
+            <td class="result-text"><code>978aa65</code> 엄지 판정을 손 방향(왼손/오른손)에 무관하게 변경 · <code>444a232</code> 테스트 스크립트 정리 (제목 "Potential fix for pull request finding" — PR 지적 반영으로 보임)</td>
+          </tr>
+          <tr>
+            <td class="mod-cell">05-25</td>
+            <td class="result-text"><code>baa6019</code> 두 파일 크게 재작성 (합쳐 536줄 추가·183줄 삭제), 제목 "핀치 동작 데이터 증강 필요, 80% 완료"</td>
+          </tr>
+          <tr>
+            <td class="mod-cell">05-30</td>
+            <td class="result-text"><code>6a7066b</code> <code>gesture_module_API.py</code> 44줄 수정 (제목 "클라이언트 단 변경 전")</td>
+          </tr>
+          <tr>
+            <td class="mod-cell">현재</td>
+            <td class="result-text"><code>gesture_service.py</code>가 같은 모듈에서 <code>detect_gesture</code>를 가져다 쓰고, <code>gesture_classifier.py</code>는 모델이 없을 때 이 모듈의 규칙으로 fallback한다고 적혀 있음</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>초기 버전의 한계</h2>
+      <span class="section-note">확인 / 추정 / 기록 없음 구분</span>
+    </div>
+    <div class="bug-list">
+      <div class="bug">
+        <div class="bug-title">[확인] 엄지 판정이 손 방향에 의존</div>
+        <div class="bug-desc"><code>landmarks[4].x &lt; landmarks[3].x</code>는 한쪽 손 방향만 가정한 규칙이라 왼손/오른손에 따라 결과가 달라짐. 5/20에 다른 팀원이 상대 거리 방식(<code>_is_thumb_open</code>)으로 수정</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">[추정] 스와이프 기준이 해상도·프레임 속도에 묶였을 수 있음</div>
+        <div class="bug-desc">80픽셀, 15프레임 고정값이라 카메라 해상도나 FPS가 바뀌면 같은 동작이 다르게 판정될 수 있음. 이후 재작성에서 어떻게 바뀌었는지, 실제로 문제가 됐는지는 확인하지 않음</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">[기록 없음] 이 시점의 검증 기록</div>
+        <div class="bug-desc">웹캠 테스트 스크립트로 눈으로 확인하는 방식이었을 것으로 보이며, 정확도를 수치로 잰 기록은 남아 있지 않음</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>생성: Claude Code 세션 로그 기반 자동 정리</span>
+    <span class="mono">Capstone-F5/CapstoneProject · main@5af1800</span>
+  </footer>
+
+</div>
