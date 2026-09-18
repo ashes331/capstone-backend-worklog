@@ -1,0 +1,824 @@
+<title>휠체어 인식 YOLO — 재학습 및 감지 연동 보고</title>
+<style>
+  :root {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11161a;
+      --surface: #171d21;
+      --surface-sunken: #1d2429;
+      --text: #eceeec;
+      --text-muted: #a2aaa7;
+      --text-faint: #6d7572;
+      --accent: #5fb99f;
+      --accent-soft: #1c2b27;
+      --border: #2a3238;
+      --border-strong: #3a444a;
+      --pass-fg: #7fd39a;
+      --pass-bg: #16281d;
+      --skip-fg: #e0b054;
+      --skip-bg: #2c2413;
+      --del-fg: #e28d8d;
+      --del-bg: #2c1a1a;
+      --code-bg: #1d2327;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #11161a;
+    --surface: #171d21;
+    --surface-sunken: #1d2429;
+    --text: #eceeec;
+    --text-muted: #a2aaa7;
+    --text-faint: #6d7572;
+    --accent: #5fb99f;
+    --accent-soft: #1c2b27;
+    --border: #2a3238;
+    --border-strong: #3a444a;
+    --pass-fg: #7fd39a;
+    --pass-bg: #16281d;
+    --skip-fg: #e0b054;
+    --skip-bg: #2c2413;
+    --del-fg: #e28d8d;
+    --del-bg: #2c1a1a;
+    --code-bg: #1d2327;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f4f3ee;
+    --surface: #ffffff;
+    --surface-sunken: #ebe9e2;
+    --text: #1c1f1e;
+    --text-muted: #5c625e;
+    --text-faint: #8a8f8b;
+    --accent: #1f6e5c;
+    --accent-soft: #e3efe9;
+    --border: #e0ddd3;
+    --border-strong: #cac6b8;
+    --pass-fg: #1f6e3f;
+    --pass-bg: #e5f1e6;
+    --skip-fg: #8a5a12;
+    --skip-bg: #f7ecd8;
+    --del-fg: #9b3b3b;
+    --del-bg: #f8ecec;
+    --code-bg: #edece4;
+    --shadow: 0 1px 2px rgba(28, 31, 30, 0.04), 0 8px 24px rgba(28, 31, 30, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo",
+      "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  code, .mono {
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    border-bottom: 3px solid var(--text);
+    padding-bottom: 22px;
+    margin-bottom: 6px;
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  h1 {
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15.5px;
+    margin: 0;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-label { color: var(--text-faint); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .meta-value { color: var(--text); font-weight: 600; }
+  .meta-value.mono { font-weight: 500; }
+
+  /* ---------- Stat strip ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 36px 0 44px;
+  }
+  .stat {
+    background: var(--surface);
+    padding: 20px 20px 18px;
+  }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ---------- Section headers ---------- */
+  section { margin-top: 48px; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-size: 19px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .section-note { font-size: 13px; color: var(--text-faint); }
+
+  /* ---------- Results table ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 14px;
+    min-width: 640px;
+  }
+  thead th {
+    text-align: left;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 700;
+    padding: 12px 16px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .mod-cell { white-space: nowrap; font-weight: 700; }
+  .mod-code {
+    display: inline-block;
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 7px;
+    border-radius: 5px;
+    margin-right: 8px;
+  }
+  .result-text { color: var(--text-muted); font-size: 13.5px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .chip-pass { color: var(--pass-fg); background: var(--pass-bg); }
+  .chip-partial { color: var(--skip-fg); background: var(--skip-bg); }
+
+  /* ---------- Timeline ---------- */
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 2px solid var(--border-strong);
+  }
+  .timeline li {
+    position: relative;
+    padding: 2px 0 26px 28px;
+  }
+  .timeline li:last-child { padding-bottom: 2px; }
+  .timeline li::before {
+    content: attr(data-step);
+    position: absolute;
+    left: -19px;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+  }
+  .timeline h3 {
+    margin: 0 0 6px;
+    font-size: 15.5px;
+    font-weight: 700;
+  }
+  .timeline p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    max-width: 62ch;
+  }
+  .timeline .tag-list {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+    font-size: 11.5px;
+    background: var(--code-bg);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+
+  /* ---------- Checklist (지시서 대조) ---------- */
+  .check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .check-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .check-group-head {
+    padding: 14px 18px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .owner-name { font-weight: 800; font-size: 15px; }
+  .owner-role { font-size: 11.5px; color: var(--text-muted); }
+  .check-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+  .check-mod + .check-mod { padding-top: 14px; border-top: 1px dashed var(--border); }
+  .check-mod-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .check-list { display: flex; flex-direction: column; gap: 7px; }
+  .check-item {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .check-item .box {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    background: var(--pass-bg);
+    color: var(--pass-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 2px;
+  }
+  .check-item.fixed .box { background: var(--skip-bg); color: var(--skip-fg); }
+  .fixed-tag {
+    font-size: 10px;
+    background: var(--skip-bg);
+    color: var(--skip-fg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    .check-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Code diff blocks ---------- */
+  .diff-grid { display: flex; flex-direction: column; gap: 22px; }
+  .diff-block h3 {
+    font-size: 14.5px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .diff-block .diff-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+    max-width: 68ch;
+  }
+  .diff {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .diff-file {
+    padding: 7px 14px;
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-family: "SFMono-Regular", ui-monospace, Consolas, monospace;
+  }
+  .diff-body {
+    background: var(--code-bg);
+    overflow-x: auto;
+    padding: 6px 0;
+  }
+  .diff-line {
+    padding: 2px 16px 2px 26px;
+    white-space: pre;
+    position: relative;
+    font-family: "SFMono-Regular", ui-monospace, "JetBrains Mono", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .diff-line.add { background: var(--pass-bg); color: var(--pass-fg); }
+  .diff-line.add::before { content: "+"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.del { background: var(--del-bg); color: var(--del-fg); }
+  .diff-line.del::before { content: "\2212"; position: absolute; left: 10px; font-weight: 800; }
+  .diff-line.ctx { color: var(--text-muted); }
+  .diff-line.ctx::before { content: ""; }
+
+  /* ---------- Bug list ---------- */
+  .bug-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .bug {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .bug-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 4px;
+  }
+  .bug-desc {
+    color: var(--text-muted);
+    font-size: 13.5px;
+  }
+  .bug-desc code {
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+  footer .mono { color: var(--text-muted); }
+
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: 1fr; }
+    .page { padding: 36px 16px 72px; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .page { max-width: none; padding: 0; }
+    .stat, .table-wrap, .bug { box-shadow: none; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="eyebrow">작업 완료 보고</div>
+    <h1>휠체어 인식 YOLO — 재학습 및 감지 연동</h1>
+    <p class="subtitle">사람이 탄 휠체어 라벨 누락을 찾아 재학습하고, 휠체어 감지 시 제스처 모드가 켜지도록 백엔드·프론트 연동</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">담당</span>
+        <span class="meta-value">김성원</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">브랜치</span>
+        <span class="meta-value mono">feat/issue-66-wheelchair-detection</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">커밋</span>
+        <span class="meta-value mono">8511944 외 3건</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">기간</span>
+        <span class="meta-value">2026-09-14 ~ 19</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">상태</span>
+        <span class="meta-value" style="color: var(--pass-fg);">push 완료 · PR #73 머지 전</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">0.964</div>
+      <div class="stat-label">wheelchair mAP50 (INT8, 신규 클래스)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">9</div>
+      <div class="stat-label">발견·수정한 문제</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">21</div>
+      <div class="stat-label">변경된 파일</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>이슈 #66 대조 — 체크리스트</h2>
+      <span class="section-note">Issue #66 · docs/AI 질의.md 기준</span>
+    </div>
+    <div class="check-grid">
+
+      <div class="check-group">
+        <div class="check-group-head">
+          <span class="owner-name">Issue #66</span>
+          <span class="owner-role">체크리스트 5개</span>
+        </div>
+        <div class="check-body">
+          <div class="check-mod">
+            <div class="check-list">
+              <div class="check-item fixed"><span class="box">✓</span>휠체어 데이터셋 수집 · 라벨링<span class="fixed-tag">라벨 누락 보완</span></div>
+              <div class="check-item"><span class="box">✓</span>YOLOv8 재학습 — person / white_cane / wheelchair 3클래스</div>
+              <div class="check-item"><span class="box">✓</span>INT8 양자화 → best_int8.tflite 교체</div>
+              <div class="check-item"><span class="box">✓</span>백엔드 감지 로직에 휠체어 처리 추가</div>
+              <div class="check-item"><span class="box">✓</span>프론트 WebSocket 훅에서 휠체어 이벤트 처리</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="check-group">
+        <div class="check-group-head">
+          <span class="owner-name">팀 기획 문서</span>
+          <span class="owner-role">docs/AI 질의.md — 취약계층 자동 감지</span>
+        </div>
+        <div class="check-body">
+          <div class="check-mod">
+            <div class="check-list">
+              <div class="check-item"><span class="box">✓</span>휠체어 감지 → 제스처 인식 모드 자동 ON</div>
+              <div class="check-item"><span class="box">✓</span>감지 시 안내 음성(TTS) 재생 — 10초 간격 3회</div>
+              <div class="check-item fixed"><span class="box">✓</span>흰 지팡이 감지 로직과 같은 구조로 확장<span class="fixed-tag">훅 최초 연결</span></div>
+              <div class="check-item"><span class="box">–</span>흰 지팡이 → 음성 대화 모드 자동 ON — 이슈 #66 범위 밖이라 구현하지 않음</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>검증 결과</h2>
+      <span class="section-note">동일 val 셋 · mAP50</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>항목</th>
+            <th>결과</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">person</span></td>
+            <td class="result-text">기존 0.794 → INT8 0.846 (양자화 전 0.852) — 회귀 없이 개선</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">white_cane</span></td>
+            <td class="result-text">기존 0.969 → INT8 0.983 (양자화 전 0.984)</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">wheelchair</span></td>
+            <td class="result-text">신규 — INT8 0.964 (양자화 전 0.973), mAP50-95 0.835</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">실사용</span></td>
+            <td class="result-text">사람이 탄 휠체어 사진 신뢰도 0.0001~0.02 → <strong>0.89~0.92</strong>, 흰 지팡이 0.74 유지</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">WS</span>서버</td>
+            <td class="result-text"><code>/ws/approach</code> 실제 연결 — 휠체어 → gesture · 흰 지팡이 → voice · 3회 안내 후 종료 · 대상 없음 · 터치 종료 (TTS 가짜, 학습 셋 사진)</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">FE</span>빌드</td>
+            <td class="result-text"><code>npm ci</code> + <code>vite build</code> 에러 없음</td>
+            <td><span class="chip chip-pass">PASS</span></td>
+          </tr>
+          <tr>
+            <td class="mod-cell"><span class="mod-code">실기기</span></td>
+            <td class="result-text">카메라 동시 사용 · 오디오 재생 · 훅 재연결 수정 효과는 직접 켜서 확인하지 못함</td>
+            <td><span class="chip chip-partial">미확인</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>핵심 수정 코드</h2>
+    </div>
+    <div class="diff-grid">
+
+      <div class="diff-block">
+        <h3>1. 사람이 탄 휠체어가 wheelchair로 학습되지 않던 문제</h3>
+        <p class="diff-note">원본 데이터셋에서 <code>people_wheelchair</code>만 있는 이미지가 496장, <code>wheelchair</code>만 있는 이미지가 379장, 둘 다 있는 이미지는 2장뿐이었습니다. person 박스만 남기고 wheelchair 박스를 남기지 않아, 모델이 wheelchair를 빈 휠체어 사진으로만 배웠습니다. 원래의 느슨한 박스를 wheelchair로도 남겼습니다.</p>
+        <div class="diff">
+          <div class="diff-file">ai_modules/cv/wheelchair_training/scripts/pseudo_label_wheelchair.py</div>
+          <div class="diff-body">
+            <div class="diff-line ctx">for j, ok in enumerate(resolved_flags):</div>
+            <div class="diff-line ctx">    ...  # person 박스는 검출 결과로 교체, 실패하면 원본 박스를 폴백</div>
+            <div class="diff-line ctx"></div>
+            <div class="diff-line add">wheelchair_px = wheelchair_px + pw_px</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>2. pseudo-labeling 박스 좌표 스케일</h3>
+        <p class="diff-note">모델 출력 좌표가 이미 0~1로 정규화되어 있는데 입력 해상도(320) 기준 픽셀로 착각해 다시 스케일링해서, 874건 전부 매칭에 실패했습니다.</p>
+        <div class="diff">
+          <div class="diff-file">ai_modules/cv/wheelchair_training/scripts/tflite_person_detector.py</div>
+          <div class="diff-body">
+            <div class="diff-line del">sx, sy = img_w / self._w, img_h / self._h</div>
+            <div class="diff-line del">x1 = (cx - w / 2) * sx</div>
+            <div class="diff-line add">x1 = (cx - w / 2) * img_w</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>3. 트리거별 안내 문구와 프론트 모드</h3>
+        <p class="diff-note">감지 대상에 따라 안내 문구와 프론트가 켤 입력 모드가 달라지도록 했습니다. (docs/AI 질의.md 설계: 흰 지팡이 → 음성, 휠체어 → 제스처)</p>
+        <div class="diff">
+          <div class="diff-file">backend/core/approach_service.py</div>
+          <div class="diff-body">
+            <div class="diff-line del">ANNOUNCEMENT_MESSAGE = "햄버거 주문을 위한 키오스크 입니다."</div>
+            <div class="diff-line add">ANNOUNCEMENT_MESSAGES = {</div>
+            <div class="diff-line add">    "white_cane": "햄버거 주문을 위한 키오스크 입니다.",</div>
+            <div class="diff-line add">    "wheelchair": "휠체어 이용 고객님, 손동작으로 메뉴를 선택하실 수 있습니다.",</div>
+            <div class="diff-line add">}</div>
+            <div class="diff-line add">MODE_ACTIONS = {"white_cane": "voice", "wheelchair": "gesture"}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>4. 훅이 매 렌더마다 재연결되던 문제</h3>
+        <p class="diff-note">훅의 <code>useEffect</code>가 콜백을 의존성으로 쓰는데, 매 렌더 새 화살표 함수를 넘기면 제스처 HUD 때문에 자주 리렌더되는 <code>App</code>에서 카메라와 WebSocket이 계속 끊겼다 다시 연결됩니다.</p>
+        <div class="diff">
+          <div class="diff-file">frontend/src/App.jsx</div>
+          <div class="diff-body">
+            <div class="diff-line del">useApproachDetector({</div>
+            <div class="diff-line del">  enabled: true,</div>
+            <div class="diff-line del">  onModeAction: (action) =&gt; { if (action === 'gesture') setGestureEnabled(true) },</div>
+            <div class="diff-line del">})</div>
+            <div class="diff-line add">const handleApproachModeAction = useCallback((action) =&gt; {</div>
+            <div class="diff-line add">  if (action === 'gesture') setGestureEnabled(true)</div>
+            <div class="diff-line add">}, [])</div>
+            <div class="diff-line add">useApproachDetector({ enabled: true, onModeAction: handleApproachModeAction })</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-block">
+        <h3>5. 안내 종료 후 재시작 잠금</h3>
+        <p class="diff-note">안내 3회 완료 또는 터치로 끝나면 잠금 상태로 두고, 대상이 연속 6프레임(약 3초) 사라져야 다시 감지합니다. 안내 중일 때만 터치가 잠금을 겁니다.</p>
+        <div class="diff">
+          <div class="diff-file">backend/core/approach_service.py</div>
+          <div class="diff-body">
+            <div class="diff-line del">if not session.mode_on:</div>
+            <div class="diff-line del">    trigger = _pick_trigger(white_cane_detected, wheelchair_detected)</div>
+            <div class="diff-line del">    if trigger:</div>
+            <div class="diff-line del">        session.activate(trigger)</div>
+            <div class="diff-line add">trigger = _pick_trigger(white_cane_detected, wheelchair_detected)</div>
+            <div class="diff-line add">if session.latched:</div>
+            <div class="diff-line add">    if trigger is None:</div>
+            <div class="diff-line add">        session.absent_frames += 1</div>
+            <div class="diff-line add">        if session.absent_frames &gt;= REARM_ABSENT_FRAMES:</div>
+            <div class="diff-line add">            session.latched = False</div>
+            <div class="diff-line add">            session.absent_frames = 0</div>
+            <div class="diff-line add">    else:</div>
+            <div class="diff-line add">        session.absent_frames = 0</div>
+            <div class="diff-line add">elif not session.mode_on and trigger:</div>
+            <div class="diff-line add">    session.activate(trigger)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>작업 흐름</h2>
+    </div>
+    <ol class="timeline">
+      <li data-step="1">
+        <h3>계획서·기획 문서 대조</h3>
+        <p>작업 계획서, Issue #66, 팀 기획 대화록(docs/AI 질의.md)을 대조해 3클래스 재학습과 "휠체어 → 제스처 모드" 설계를 확정.</p>
+      </li>
+      <li data-step="2">
+        <h3>데이터셋 분석</h3>
+        <p>라벨 파일을 직접 세어 계획서의 가정("person 라벨 없음")이 틀렸고, 사람이 탄 휠체어만 별도 클래스의 느슨한 박스로 라벨링되어 있음을 확인.</p>
+      </li>
+      <li data-step="3">
+        <h3>Pseudo-labeling · 병합 · 1차 학습(v1)</h3>
+        <p>구모델로 person 박스 정제(73% 성공), 두 데이터셋을 <code>person=0, white_cane=1, wheelchair=2</code>로 병합하고 오버샘플링 후 80 epoch 학습, INT8 양자화.</p>
+      </li>
+      <li data-step="4">
+        <h3>백엔드·프론트 연동</h3>
+        <p>감지기를 3클래스로 재작성하고 트리거별 안내·모드 액션을 추가, 훅을 <code>App.jsx</code>에 최초로 연결.</p>
+      </li>
+      <li data-step="5">
+        <h3>실사용 테스트에서 문제 발견</h3>
+        <p>사람이 탄 휠체어가 거의 감지되지 않음(0.0001~0.02). 검증 mAP는 높았지만 val 셋이 같은 좁은 분포라 가려져 있었음.</p>
+      </li>
+      <li data-step="6">
+        <h3>데이터 수정 · 재학습(v2)</h3>
+        <p>wheelchair 박스를 함께 남기도록 pseudo-labeling을 고쳐 재학습·재양자화, 프로덕션 모델 교체 후 같은 사진으로 재검증(0.89~0.92).</p>
+      </li>
+      <li data-step="7">
+        <h3>검증 · 형상관리</h3>
+        <p>WebSocket 시나리오와 프론트 빌드 확인, 감지 훅 재연결 버그와 안내 무한 반복 수정, 커밋 4건 push 후 PR #73 생성.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>발견한 문제</h2>
+      <span class="section-note">9건</span>
+    </div>
+    <div class="bug-list">
+      <div class="bug">
+        <div class="bug-title">사람이 탄 휠체어가 wheelchair로 학습되지 않음</div>
+        <div class="bug-desc">1차 pseudo-labeling이 <code>people_wheelchair</code>를 person으로만 바꾸고 wheelchair 박스를 남기지 않아, 실사용에서 사람이 탄 휠체어가 거의 감지되지 않았음. 검증 mAP로는 드러나지 않았고 실사진 테스트에서 발견</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">구모델 클래스 순서가 배포 코드와 반대</div>
+        <div class="bug-desc">구모델은 <code>class0 = white_cane, class1 = person</code>인데 <code>approach_detector.py</code>는 <code>WHITE_CANE_CLASS_ID = 1</code>. 정답 박스 816개 위치에서 통계로 확인. 모델 교체와 함께 해소</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title"><code>useApproachDetector</code>가 어디에도 연결되어 있지 않음</div>
+        <div class="bug-desc">기획 문서엔 시각장애인 쪽이 "완료"로 적혀 있었지만 훅은 정의만 있고 쓰이지 않았음. 이번에 <code>App.jsx</code>에 처음 연결</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">pseudo-labeling 좌표 스케일 오류 (제 코드)</div>
+        <div class="bug-desc">정규화된 출력 좌표를 입력 해상도 픽셀로 착각해 다시 스케일링, 874건 전부 매칭 실패</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">교체한 신모델을 pseudo-labeling이 다시 읽음 (제 작업 순서)</div>
+        <div class="bug-desc">프로덕션 모델 경로를 신모델로 교체한 뒤 재학습용 pseudo-labeling을 돌리자 구모델이 아닌 신모델(클래스 순서 다름)을 읽어 또 0건. git 히스토리에서 구모델을 복원해 별도 경로로 분리</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">Windows에서 tflite 변환이 막힘</div>
+        <div class="bug-desc">최신 <code>ultralytics</code>의 LiteRT export가 Windows 미지원 → 8.3.40 고정, <code>tflite_support</code>는 C++ 컴파일러 필요(메타데이터만 실패, INT8 변환은 정상), numpy 2.x의 <code>np.trapz</code> 제거로 학습 중 검증이 죽어 shim 추가</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">훅이 매 렌더마다 카메라·WebSocket 재연결 (제 연동 코드)</div>
+        <div class="bug-desc">콜백을 의존성으로 쓰는 <code>useEffect</code>에 매 렌더 새 함수를 넘겨, 자주 리렌더되는 <code>App</code>에서 연결이 계속 끊겼다 다시 맺어짐. <code>useCallback</code>으로 참조를 고정</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">안내가 끝없이 반복되고 터치해도 멈추지 않음</div>
+        <div class="bug-desc">안내 3회 종료 후에도 대상이 화면에 있으면 다음 프레임에서 바로 재시작(7초 테스트에서 안내 18회), 터치 종료 ack 후에도 재시작. <code>App.jsx</code>가 <code>notifyUserInput</code>을 호출하지도 않았음. 종료 시 잠금을 걸고 대상이 연속 약 3초 사라져야 해제하도록 수정(임시 조건), 터치·클릭을 훅에 연결</div>
+      </div>
+      <div class="bug">
+        <div class="bug-title">데이터셋 폴더 혼동 (제 검증 실수)</div>
+        <div class="bug-desc"><code>visionguide_dataset</code> 루트의 <code>images/</code>·<code>labels/</code>(white_cane만, 9,308장)와 실제 학습용 <code>train/</code>·<code>val/</code>·<code>test/</code>가 따로 있는데 루트로 검증해 "person 라벨 0개"라는 잘못된 결론을 얻었음</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>생성: Claude Code 세션 로그 기반 자동 정리</span>
+    <span class="mono">Capstone-F5/CapstoneProject · feat/issue-66-wheelchair-detection@0b49f65</span>
+  </footer>
+
+</div>

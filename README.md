@@ -14,6 +14,7 @@
 |---|---|---|
 | 2026-07-06~12 | AI Tool 파트 (action_tools.py 재작성) | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/AI%20Tool%20%ED%8C%8C%ED%8A%B8%20%282026-07-06~12%29/report.html) |
 | 2026-07-20~26 | 관리자 백엔드 버그 수정 및 검증 | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/%EA%B4%80%EB%A6%AC%EC%9E%90%20%EB%B0%B1%EC%97%94%EB%93%9C%20%282026-07-20~26%29/report.html) |
+| 2026-09-14~19 | 휠체어 인식 YOLO 재학습 및 감지 연동 | [report.html (렌더링됨)](https://ashes331.github.io/capstone-backend-worklog/%ED%9C%A0%EC%B2%B4%EC%96%B4%20%EC%9D%B8%EC%8B%9D%20YOLO%20%282026-09-14~19%29/report.html) |
 
 ---
 
@@ -72,3 +73,30 @@ Module C(주문로직) · D(환불) · E(주문관리) · F(쿠폰할인) · H(�
 - **발견·수정한 버그**: 9건 (async/sync 세션 불일치, 관리자 인증 누락, 파일명 오타, 중복 함수 정의로 인한 연쇄 파손 등)
 - **검증**: 로컬 MySQL에 연결해 Module A~H 전체를 실제 API 호출로 완료 기준 확인
 - **결과**: `feature/backend-phase2`에 커밋 후 push 완료
+
+---
+
+## 2026-09-14~19 — 휠체어 인식 YOLO
+
+**보고서: [ashes331.github.io/capstone-backend-worklog](https://ashes331.github.io/capstone-backend-worklog/) 목록에서 확인**
+
+`feat/issue-66-wheelchair-detection` 작업(이슈 #66, PR #73). 기존 YOLOv8n(person + white_cane)에 휠체어를
+추가해 재학습·양자화하고, 휠체어 감지 시 제스처 인식 모드가 자동으로 켜지도록 백엔드·프론트를 연동했습니다.
+
+### 폴더 구성
+
+| 경로 | 내용 |
+|---|---|
+| [`휠체어 인식 YOLO (2026-09-14~19)/WORKLOG.md`](<./휠체어 인식 YOLO (2026-09-14~19)/WORKLOG.md>) | 이슈 #66 체크리스트 기준으로 진행 상황·발견한 문제·수정 코드·검증 결과를 정리한 작업 기록 |
+| [`휠체어 인식 YOLO (2026-09-14~19)/fixed-code/`](<./휠체어 인식 YOLO (2026-09-14~19)/fixed-code>) | 이번에 수정·추가한 소스 18개 (감지기·서비스·WebSocket, 프론트 훅·`App.jsx`, 학습 파이프라인 스크립트) |
+| [`휠체어 인식 YOLO (2026-09-14~19)/report.html`](<./휠체어 인식 YOLO (2026-09-14~19)/report.html>) | 체크리스트 대조, 검증 결과, 핵심 수정 코드, 발견한 문제를 정리한 웹 문서 |
+
+### 요약
+
+- **모델**: person / white_cane / wheelchair 3클래스 YOLOv8n을 재학습해 INT8로 양자화. 같은 val 셋 기준 mAP50은
+  person 0.794 → 0.846, white_cane 0.969 → 0.983, wheelchair 0.964(신규)
+- **발견·수정한 문제**: 9건. 가장 큰 것은 사람이 탄 휠체어가 wheelchair로 학습되지 않던 데이터 문제로, 검증 mAP로는
+  드러나지 않고 실사진 테스트에서 발견해 재학습
+- **연동**: 휠체어 감지 → 제스처 모드 자동 ON + 안내 음성, `useApproachDetector` 훅을 `App.jsx`에 처음 연결
+- **미확인**: 카메라를 켠 실기기 동작 (서버 WebSocket 시나리오와 프론트 빌드까지만 확인)
+- **결과**: 커밋 4건 push, PR #73 생성 (머지 전)
